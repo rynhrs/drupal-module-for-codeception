@@ -9,28 +9,18 @@ use Codeception\Module;
 class Drupal8 extends Module
 {
 
-	private $kernel;
-	private $entityManager;
-
-	public function _initialize()
+    public function drupalLogin($username)
     {
-
         $autoloader = require_once 'autoload.php';
+
+        $kernel = new DrupalKernel('prod', $autoloader);
         $request = Request::createFromGlobals();
-        $this->kernel = DrupalKernel::createFromRequest($request, $autoloader, 'prod');
+        $response = $kernel->handle($request);
+        
+        $user = user_load_by_name($username);
+        user_login_finalize($user);
 
-    	$this->kernel->boot();
-
-    	$this->entityManager = $this->kernel->getContainer()->get('entity.manager');
-
-    }
-
-    public function login($username)
-    {
-    	//$user = $this->entityManager->getStorage('user')->load(1);
-		$user = user_load_by_name($username);
-		//print_r($user);
-		user_login_finalize($user);
+        $kernel->terminate($request, $response);
     }
 
 }
